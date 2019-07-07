@@ -3,10 +3,21 @@
 namespace App\Exceptions;
 
 use Exception;
+use App\Traits\ApiResponser;
+use Illuminate\Database\QueryException;
+use Illuminate\Auth\AuthenticationException;
+use Illuminate\Validation\ValidationException;
+use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 
 class Handler extends ExceptionHandler
 {
+    use ApiResponser;
+    
     /**
      * A list of the exception types that are not reported.
      *
@@ -46,6 +57,42 @@ class Handler extends ExceptionHandler
      */
     public function render($request, Exception $exception)
     {
-        return parent::render($request, $exception);
+        if ($exception instanceof ValidationException) {
+            return $this->errorResponse(422, $exception->getMessage(), $exception->errors());
+        }
+
+        if ($exception instanceof ModelNotFoundException) {
+            $modelo = strtolower(class_basename($exception->getModel()));
+            return $this->errorResponse(404, "No existe ninguna instancia de {$modelo} con el id especificado.");
+        }
+        
+        if ($exception instanceof AuthenticationException) {
+            return $this->errorResponse(401, "No autenticado.");
+        }
+        
+        if ($exception instanceof AuthorizationException) {
+            return $this->errorResponse(403, "No posee permisos para ejecutar esta acción.");
+        }
+        
+        if ($exception instanceof NotFoundHttpException) {
+            return $this->errorResponse(404, "No se encontró la URL especificado.");
+        }
+        
+        if ($exception instanceof HttpException) {
+            return $this->errorResponse($exception->getStatusCode(), $exception->getMessage());
+        }
+
+        if ($exception instanceof QueryException) {
+            $codigo = $exception->errorInfo[1];
+            if ($codigo == 1451) {
+                return $this->errorResponse(409, "No se puede eliminar de forma permanente el recurso porque está relacionado con algún otro.");
+            }
+        }
+
+        if (config("app.debug")) {
+            return parent::render($request, $exception);
+        } 
+        
+        return $this->errorResponse(500, "Error interno.");
     }
 }

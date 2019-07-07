@@ -13,7 +13,7 @@ class ProductSeeder extends Seeder
      */
     public function run()
     {
-        factory(Product::class, 1000)->create()->each(
+        factory(Product::class, 100)->create()->each(
             function ($product)
             {
                 $categories = Category::all()->random(mt_rand(1, 5))->pluck('id');
