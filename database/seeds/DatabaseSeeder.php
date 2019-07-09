@@ -24,6 +24,11 @@ class DatabaseSeeder extends Seeder
         Category::truncate();
         User::truncate();
 
+        User::flushEventListeners();
+        Product::flushEventListeners();
+        Category::flushEventListeners();
+        Transaction::flushEventListeners();
+
         $this->call([
             UserSeeder::class,
             CategorySeeder::class,

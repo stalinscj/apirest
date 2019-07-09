@@ -2,7 +2,11 @@
 
 namespace App\Providers;
 
+use App\User;
 use App\Product;
+use App\Mail\UserCreatedMail;
+use App\Mail\UserUpdatedMail;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -29,6 +33,20 @@ class AppServiceProvider extends ServiceProvider
                 $product->status = Product::PRODUCT_NOT_AVAILABLE;
                 
                 $product->save();
+            }
+        });
+
+        User::created(function ($user){
+            retry(5, function () use ($user) {
+                Mail::to($user)->send(new UserCreatedMail($user));
+            }, 100);
+        });
+
+        User::updated(function ($user){
+            if ($user->isDirty('email')) {
+                retry(5, function () use ($user) {
+                    Mail::to($user)->send(new UserUpdatedMail($user));
+                }, 100);
             }
         });
     }
