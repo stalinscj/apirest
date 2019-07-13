@@ -23,20 +23,42 @@ class UserTransformer extends TransformerAbstract
             'created_at' => (string) $user->created_at,
             'updated_at' => (string) $user->updated_at,
             'deleted_at' => isset($user->deleted_at) ? (string) $user->deleted_at : null,
+            'links'      => [
+                [
+                    'rel'  => 'self',
+                    'href' => route('users.show', $user->id),
+                ],
+            ],
         ];
     }
 
     public static function getOriginalAttribute($index)
     {
         $attributes =  [
-            'id'         => "id",
-            'name'       => "name",
-            'email'      => "email",
-            'verified'   => "verified",
-            'admin'      => "admin",
-            'created_at' => "created_at",
-            'updated_at' => "updated_at",
-            'deleted_at' => "deleted_at",
+            'id'         => 'id',
+            'name'       => 'name',
+            'email'      => 'email',
+            'verified'   => 'verified',
+            'admin'      => 'admin',
+            'created_at' => 'created_at',
+            'updated_at' => 'updated_at',
+            'deleted_at' => 'deleted_at',
+        ];
+
+        return isset($attributes[$index]) ? $attributes[$index] : null; 
+    }
+
+    public static function getTransformedAttribute($index)
+    {
+        $attributes =  [
+            'id'         => 'id',
+            'name'       => 'name',
+            'email'      => 'email',
+            'verified'   => 'verified',
+            'admin'      => 'admin',
+            'created_at' => 'created_at',
+            'updated_at' => 'updated_at',
+            'deleted_at' => 'deleted_at',
         ];
 
         return isset($attributes[$index]) ? $attributes[$index] : null; 

@@ -6,6 +6,7 @@ use Exception;
 use App\Traits\ApiResponser;
 use Illuminate\Database\QueryException;
 use Illuminate\Auth\AuthenticationException;
+use Illuminate\Session\TokenMismatchException;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -57,7 +58,14 @@ class Handler extends ExceptionHandler
      */
     public function render($request, Exception $exception)
     {
+        
+
         if ($exception instanceof ValidationException) {
+            if ($this->isFrontEnd($request)){
+                return $request->ajax()
+                    ? response()->json($exception->errors(), 422)
+                    : redirect()->back()->withInput($request->input())->withErrors($exception->errors());
+            }
             return $this->errorResponse(422, $exception->getMessage(), $exception->errors());
         }
 
@@ -67,6 +75,9 @@ class Handler extends ExceptionHandler
         }
         
         if ($exception instanceof AuthenticationException) {
+            if ($this->isFrontEnd($request)){
+                return redirect()->guest('login');
+            }
             return $this->errorResponse(401, "No autenticado.");
         }
         
@@ -75,6 +86,7 @@ class Handler extends ExceptionHandler
         }
         
         if ($exception instanceof NotFoundHttpException) {
+            
             return $this->errorResponse(404, "No se encontró la URL especificado.");
         }
         
@@ -89,10 +101,25 @@ class Handler extends ExceptionHandler
             }
         }
 
+        if ($exception instanceof TokenMismatchException) {
+            return $this->redirect()->back()->withInput($request->input());
+        }
+
         if (config("app.debug")) {
             return parent::render($request, $exception);
-        } 
+        }
         
         return $this->errorResponse(500, "Error interno.");
+    }
+
+    /**
+     * Check if request is comming from frontend.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return bolean $isFrontEnd
+     */
+    private function isFrontEnd($request)
+    {
+        return $request->acceptsHtml() && collect($request->route()->middleware())->contains("web");
     }
 }
