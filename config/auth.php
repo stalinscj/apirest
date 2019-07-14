@@ -37,14 +37,14 @@ return [
 
     'guards' => [
         'web' => [
-            'driver' => 'session',
+            'driver'   => 'session',
             'provider' => 'users',
         ],
 
         'api' => [
-            'driver' => 'token',
+            'driver'   => 'passport',
             'provider' => 'users',
-            'hash' => false,
+            'hash'     => false,
         ],
     ],
 
